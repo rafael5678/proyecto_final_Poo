@@ -1,0 +1,181 @@
+<div class="portal-layout with-sidebar paciente">
+  <app-portal-sidebar
+    theme="paciente"
+    [items]="menuItems"
+    [activeTab]="tab()"
+    [activeSub]="sub()"
+    [expandedIds]="expandedMenus()"
+    (navigate)="onNavigate($event)"
+    (toggleGroup)="onToggleGroup($event)"
+  />
+
+  <div class="portal-main">
+    <header class="portal-header paciente-header">
+      <div class="header-main">
+        <h1>{{ pageTitle() }}</h1>
+        <span class="session-user">{{ auth.user()?.nombre }}</span>
+      </div>
+      <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
+    </header>
+
+    <main class="portal-content">
+      @if (ok()) { <div class="alert ok">{{ ok() }}</div> }
+      @if (error()) { <div class="alert err">{{ error() }}</div> }
+
+      @if (tab() === 'inicio' && dashboard(); as d) {
+        <div class="stats">
+          <div class="stat-card"><span>Total citas</span><strong>{{ d.totalCitas }}</strong></div>
+          <div class="stat-card"><span>Pendientes</span><strong>{{ d.citasPendientes }}</strong></div>
+          <div class="stat-card"><span>Aceptadas</span><strong>{{ d.citasAceptadas }}</strong></div>
+          <div class="stat-card"><span>Próximas</span><strong>{{ d.proximasCitas }}</strong></div>
+        </div>
+        <h3 class="section-title">Próximas citas</h3>
+        @if (proximas().length === 0) {
+          <p class="empty">No tienes citas próximas.</p>
+        } @else {
+          <table>
+            <thead><tr><th>Médico</th><th>Fecha</th><th>Estado</th></tr></thead>
+            <tbody>
+              @for (c of proximas(); track c.id) {
+                <tr>
+                  <td>{{ c.medicoNombre }}</td>
+                  <td>{{ c.fechaHora | date:'medium' }}</td>
+                  <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+
+      @if (tab() === 'agendar') {
+        <div class="card section">
+          <h2 class="section-title">Agendar cita médica</h2>
+          <label>Médico</label>
+          <select class="input" [(ngModel)]="medicoId" (ngModelChange)="onMedicoChange()">
+            <option [ngValue]="null">Selecciona un médico</option>
+            @for (m of medicos(); track m.id) {
+              <option [ngValue]="m.id">{{ m.nombre }} — {{ m.especialidad }}</option>
+            }
+          </select>
+          @if (horarios().length) {
+            <p class="hint">Horarios del médico:</p>
+            <ul>
+              @for (h of horarios(); track h.id) {
+                <li>Día {{ h.diaSemana }}: {{ h.horaInicio }} - {{ h.horaFin }}</li>
+              }
+            </ul>
+          }
+          <label>Fecha y hora</label>
+          <input class="input" type="datetime-local" [(ngModel)]="fechaHora" />
+          <label>Motivo de consulta</label>
+          <input class="input" [(ngModel)]="motivo" placeholder="Consulta general, control..." />
+          <button type="button" class="btn btn-green" (click)="agendar()" [disabled]="loading()">Agendar cita</button>
+        </div>
+      }
+
+      @if (tab() === 'historial') {
+        <h2 class="section-title">Historial de citas</h2>
+        @if (citas().length === 0) {
+          <p class="empty">Sin citas registradas.</p>
+        } @else {
+          <table>
+            <thead><tr><th>Médico</th><th>Especialidad</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              @for (c of citas(); track c.id) {
+                <tr>
+                  <td>{{ c.medicoNombre }}</td>
+                  <td>{{ c.medicoEspecialidad }}</td>
+                  <td>{{ c.fechaHora | date:'medium' }}</td>
+                  <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+                  <td>
+                    @if (c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') {
+                      <button type="button" class="btn-sm cancel" (click)="cancelar(c.id)">Cancelar</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+
+      @if (tab() === 'proximas') {
+        <h2 class="section-title">Próximas citas</h2>
+        @if (proximas().length === 0) {
+          <p class="empty">No hay citas próximas.</p>
+        } @else {
+          <table>
+            <thead><tr><th>Médico</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              @for (c of proximas(); track c.id) {
+                <tr>
+                  <td>{{ c.medicoNombre }}</td>
+                  <td>{{ c.fechaHora | date:'medium' }}</td>
+                  <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+                  <td>
+                    @if (c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') {
+                      <button type="button" class="btn-sm cancel" (click)="cancelar(c.id)">Cancelar</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+
+      @if (tab() === 'medicos') {
+        <h2 class="section-title">Directorio de médicos</h2>
+        <input class="input filter" placeholder="Filtrar por especialidad..." [(ngModel)]="filtroEspecialidad" />
+        <div class="medico-cards">
+          @for (m of medicosFiltrados(); track m.id) {
+            <div class="medico-card" (click)="verMedico(m)">
+              <h3>{{ m.nombre }}</h3>
+              <p class="esp">{{ m.especialidad }}</p>
+              @if (m.consultorio) { <p>📍 {{ m.consultorio }}</p> }
+              @if (m.anosExperiencia) { <p>{{ m.anosExperiencia }} años de experiencia</p> }
+              <button type="button" class="btn-sm">Ver horarios</button>
+            </div>
+          }
+        </div>
+        @if (medicoDetalle(); as md) {
+          <div class="card section">
+            <h3>{{ md.nombre }}</h3>
+            <p><strong>Especialidad:</strong> {{ md.especialidad }}</p>
+            @if (md.biografia) { <p>{{ md.biografia }}</p> }
+            <p><strong>Horarios:</strong></p>
+            <ul>
+              @for (h of horarios(); track h.id) {
+                <li>Día {{ h.diaSemana }}: {{ h.horaInicio }} - {{ h.horaFin }}</li>
+              }
+            </ul>
+            <button type="button" class="btn btn-green" (click)="irAgendarConMedico(md)">Agendar con este médico</button>
+          </div>
+        }
+      }
+
+      @if (tab() === 'perfil' && perfil(); as p) {
+        <div class="card section form-grid">
+          <h2 class="section-title">Mi perfil</h2>
+          <div><label>Nombre</label><input class="input" [(ngModel)]="p.nombre" /></div>
+          <div><label>Email</label><input class="input" [value]="p.email" disabled /></div>
+          <div><label>Teléfono</label><input class="input" [(ngModel)]="p.telefono" /></div>
+          <div><label>Documento</label><input class="input" [(ngModel)]="p.documento" /></div>
+          <div><label>Fecha nacimiento</label><input class="input" type="date" [(ngModel)]="p.fechaNacimiento" /></div>
+          <div><label>Género</label><input class="input" [(ngModel)]="p.genero" /></div>
+          <div><label>Tipo sangre</label><input class="input" [(ngModel)]="p.tipoSangre" /></div>
+          <div><label>Dirección</label><input class="input" [(ngModel)]="p.direccion" /></div>
+          <div><label>Ciudad</label><input class="input" [(ngModel)]="p.ciudad" /></div>
+          <div class="full"><label>Alergias</label><input class="input" [(ngModel)]="p.alergias" /></div>
+          <div><label>Contacto emergencia</label><input class="input" [(ngModel)]="p.contactoEmergencia" /></div>
+          <div><label>Tel. emergencia</label><input class="input" [(ngModel)]="p.telefonoEmergencia" /></div>
+          <div class="full"><label>Observaciones</label><textarea class="input" [(ngModel)]="p.observaciones"></textarea></div>
+          <button type="button" class="btn btn-green full" (click)="guardarPerfil()" [disabled]="guardandoPerfil()">
+            Guardar cambios
+          </button>
+        </div>
+      }
+    </main>
+  </div>
+</div>

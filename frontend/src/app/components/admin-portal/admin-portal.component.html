@@ -1,0 +1,160 @@
+<div class="portal-layout with-sidebar">
+  <app-portal-sidebar
+    theme="admin"
+    [items]="menuItems"
+    [activeTab]="tab()"
+    [activeSub]="sub()"
+    [expandedIds]="expandedMenus()"
+    (navigate)="onNavigate($event)"
+    (toggleGroup)="onToggleGroup($event)"
+  />
+
+  <div class="portal-main">
+    <header class="portal-header admin-header">
+      <div class="header-main">
+        <h1>{{ pageTitle() }}</h1>
+        <span class="session-user">{{ auth.user()?.nombre }}</span>
+        <app-session-timeout rol="ADMIN" theme="admin" />
+      </div>
+      <button type="button" class="btn btn-logout" (click)="auth.logout()">Cerrar sesión</button>
+    </header>
+
+    <main class="portal-content">
+      @if (tab() === 'inicio' && reporte(); as r) {
+        <div class="stats-grid">
+          <div class="stat"><span>Total citas</span><strong>{{ r.totalCitas }}</strong></div>
+          <div class="stat"><span>Pendientes</span><strong>{{ r.citasPendientes }}</strong></div>
+          <div class="stat"><span>Aceptadas</span><strong>{{ r.citasAceptadas }}</strong></div>
+          <div class="stat"><span>Canceladas</span><strong>{{ r.citasCanceladas }}</strong></div>
+          <div class="stat"><span>Pacientes</span><strong>{{ r.totalPacientes }}</strong></div>
+          <div class="stat"><span>Médicos</span><strong>{{ r.totalMedicos }}</strong></div>
+        </div>
+        <p class="hint">Use el menú lateral para gestionar usuarios, médicos, citas y reportes.</p>
+      }
+
+      @if (tab() === 'usuarios' && sub() === 'lista') {
+        <h2 class="section-title">Todos los usuarios</h2>
+        <table>
+          <thead>
+            <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody>
+            @for (u of usuarios(); track u.id) {
+              <tr>
+                <td>{{ u.nombre }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.rol }}</td>
+                <td>{{ u.activo ? 'Activo' : 'Inactivo' }}</td>
+                <td>
+                  @if (u.activo && u.rol !== 'ADMIN') {
+                    <button type="button" class="btn-sm no" (click)="desactivar(idUsuario(u))">Desactivar</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (tab() === 'usuarios' && sub() === 'crear') {
+        <div class="card section form-grid">
+          <h2>Registrar usuario</h2>
+          <input class="input" placeholder="Nombre" [(ngModel)]="form.nombre" />
+          <input class="input" placeholder="Email" [(ngModel)]="form.email" />
+          <input class="input" type="password" placeholder="Contraseña" [(ngModel)]="form.password" />
+          <select class="input" [(ngModel)]="form.rol">
+            <option value="PACIENTE">PACIENTE</option>
+            <option value="MEDICO">MEDICO</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+          <input class="input" placeholder="Teléfono" [(ngModel)]="form.telefono" />
+          <input class="input" placeholder="Documento (paciente)" [(ngModel)]="form.documento" />
+          <input class="input" placeholder="Especialidad (médico)" [(ngModel)]="form.especialidad" />
+          <button type="button" class="btn btn-purple" (click)="crearUsuario()">Crear usuario</button>
+          @if (error()) { <p class="error-msg">{{ error() }}</p> }
+        </div>
+      }
+
+      @if (tab() === 'medicos' && sub() === 'lista') {
+        <h2 class="section-title">Médicos registrados</h2>
+        <table>
+          <thead>
+            <tr><th>Nombre</th><th>Email</th><th>Especialidad</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody>
+            @for (u of medicos(); track u.id) {
+              <tr>
+                <td>{{ u.nombre }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.especialidad ?? '—' }}</td>
+                <td>{{ u.activo ? 'Activo' : 'Inactivo' }}</td>
+                <td>
+                  @if (u.activo) {
+                    <button type="button" class="btn-sm no" (click)="desactivar(idUsuario(u))">Desactivar</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (tab() === 'medicos' && sub() === 'crear') {
+        <div class="card section form-grid">
+          <h2>Registrar médico</h2>
+          <input class="input" placeholder="Nombre" [(ngModel)]="form.nombre" />
+          <input class="input" placeholder="Email" [(ngModel)]="form.email" />
+          <input class="input" type="password" placeholder="Contraseña" [(ngModel)]="form.password" />
+          <input class="input" placeholder="Especialidad" [(ngModel)]="form.especialidad" />
+          <input class="input" placeholder="Teléfono" [(ngModel)]="form.telefono" />
+          <button type="button" class="btn btn-purple" (click)="crearUsuario()">Crear médico</button>
+          @if (error()) { <p class="error-msg">{{ error() }}</p> }
+        </div>
+      }
+
+      @if (tab() === 'citas' && sub() === 'supervision') {
+        <h2 class="section-title">Supervisión de citas</h2>
+        <table>
+          <thead>
+            <tr><th>Paciente</th><th>Médico</th><th>Fecha</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            @for (c of citas(); track c.id) {
+              <tr>
+                <td>{{ c.pacienteNombre }}</td>
+                <td>{{ c.medicoNombre }}</td>
+                <td>{{ c.fechaHora | date:'medium' }}</td>
+                <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (tab() === 'reportes' && reporte(); as r) {
+        @if (sub() === 'resumen' || sub() === '') {
+          <h2 class="section-title">Resumen general</h2>
+          <div class="stats-grid">
+            <div class="stat"><span>Total citas</span><strong>{{ r.totalCitas }}</strong></div>
+            <div class="stat"><span>Pendientes</span><strong>{{ r.citasPendientes }}</strong></div>
+            <div class="stat"><span>Aceptadas</span><strong>{{ r.citasAceptadas }}</strong></div>
+            <div class="stat"><span>Canceladas</span><strong>{{ r.citasCanceladas }}</strong></div>
+            <div class="stat"><span>Pacientes</span><strong>{{ r.totalPacientes }}</strong></div>
+            <div class="stat"><span>Médicos</span><strong>{{ r.totalMedicos }}</strong></div>
+          </div>
+        }
+        @if (sub() === 'mensual') {
+          <h2 class="section-title">Desglose mensual (recursivo)</h2>
+          <table>
+            <thead><tr><th>Mes</th><th>Citas</th></tr></thead>
+            <tbody>
+              @for (m of r.desgloseMensual; track m.mes) {
+                <tr><td>{{ m.nombreMes }}</td><td>{{ m.totalCitas }}</td></tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    </main>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "RenderMedico",
+      "Group": "Servers",
+      "Host": "dpg-d89nak5ckfvc738qg0v0-a.oregon-postgres.render.com",
+      "Port": 5432,
+      "MaintenanceDB": "medico_db_868n",
+      "Username": "medico_user",
+      "SSLMode": "require",
+      "PassFile": "",
+      "Comment": "Sistema Hospy - Render PostgreSQL"
+    }
+  }
+}

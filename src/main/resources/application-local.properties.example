@@ -1,0 +1,9 @@
+# Copia este archivo como application-local.properties (no lo subas a git)
+# Render PostgreSQL - usa la URL EXTERNA con puerto 5432
+
+spring.datasource.url=jdbc:postgresql://HOST.render.com:5432/NOMBRE_DB?sslmode=require
+spring.datasource.username=medico_user
+spring.datasource.password=TU_PASSWORD_DE_RENDER
+
+jwt.secret=TuClaveSecretaJWTMinimo32Caracteres
+app.cors.allowed-origins=http://localhost:4200,https://tu-app.vercel.app

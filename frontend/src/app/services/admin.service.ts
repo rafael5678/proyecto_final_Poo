@@ -1,0 +1,49 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+import { Cita } from '../models/cita.model';
+import { Reporte } from '../models/reporte.model';
+import { Usuario, UsuarioRequest } from '../models/usuario.model';
+
+@Injectable({ providedIn: 'root' })
+export class AdminService {
+  private readonly api = `${environment.apiUrl}/admin`;
+
+  constructor(private http: HttpClient) {}
+
+  listarUsuarios() {
+    return this.http.get<Usuario[]>(`${this.api}/usuarios`);
+  }
+
+  crearUsuario(data: UsuarioRequest) {
+    return this.http.post<Usuario>(`${this.api}/usuarios`, data);
+  }
+
+  actualizarUsuario(id: number, data: UsuarioRequest) {
+    return this.http.put<Usuario>(`${this.api}/usuarios/${id}`, data);
+  }
+
+  desactivarUsuario(id: number) {
+    return this.http.delete(`${this.api}/usuarios/${id}`);
+  }
+
+  listarMedicos() {
+    return this.http.get<Usuario[]>(`${this.api}/medicos`);
+  }
+
+  crearMedico(data: UsuarioRequest) {
+    return this.http.post<Usuario>(`${this.api}/medicos`, data);
+  }
+
+  actualizarMedico(id: number, data: UsuarioRequest) {
+    return this.http.put<Usuario>(`${this.api}/medicos/${id}`, data);
+  }
+
+  supervisarCitas() {
+    return this.http.get<Cita[]>(`${this.api}/citas`);
+  }
+
+  reportes(anio = new Date().getFullYear()) {
+    return this.http.get<Reporte>(`${this.api}/reportes`, { params: { anio } });
+  }
+}

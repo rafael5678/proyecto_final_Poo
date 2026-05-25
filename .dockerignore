@@ -1,0 +1,17 @@
+target/
+frontend/
+node_modules/
+.git/
+.gitignore
+.idea/
+*.iml
+.vscode/
+*.md
+!README.md
+postman/
+.env
+.env.*
+**/application-local.properties
+**/application-local.properties.example
+HELP.md
+agent-transcripts/
