@@ -44,6 +44,16 @@ form label:first-of-type { margin-top: 0; }
 .medico .btn-primary { background: #2563eb; }
 .paciente .btn-primary { background: #10a37f; }
 
+.hint-msg {
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 0.6rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  margin-top: 0.75rem;
+  line-height: 1.4;
+}
+
 .success-msg {
   color: #047857;
   background: #d1fae5;

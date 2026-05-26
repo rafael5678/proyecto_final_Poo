@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const out = join(__dirname, '..', 'src', 'environments', 'environment.prod.ts');
 
 const apiUrl = (process.env.API_URL || '').trim().replace(/\/$/, '');
-const fallback = 'https://TU-SERVICIO.onrender.com/api';
+const fallback = 'https://hospy-api.onrender.com/api';
 
 if (!apiUrl && process.env.VERCEL === '1') {
   console.warn(

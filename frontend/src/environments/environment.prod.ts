@@ -1,5 +1,5 @@
-/** Se regenera en build Vercel con API_URL */
+/** En Vercel se sobrescribe con API_URL en el build; este valor es respaldo */
 export const environment = {
   production: true,
-  apiUrl: 'https://TU-SERVICIO.onrender.com/api'
+  apiUrl: 'https://hospy-api.onrender.com/api'
 };
