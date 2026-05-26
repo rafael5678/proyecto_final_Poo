@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { timeout } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
@@ -79,17 +80,28 @@ export class LoginComponent implements OnInit {
   }
 
   private mapLoginError(e: unknown): string {
-    const err = e as { status?: number; error?: { error?: string }; message?: string };
-    if (err?.error?.error) return err.error.error;
-    if (err?.status === 0) {
-      return 'No se pudo conectar con el servidor. Revise CORS en Render (CORS_ORIGINS con su URL de Vercel) o espere 1 min y reintente.';
+    if (e instanceof HttpErrorResponse) {
+      const msg = this.extractApiMessage(e.error);
+      if (msg) return msg;
+      if (e.status === 0) {
+        return 'No se pudo conectar con el servidor. Espere ~1 min (Render free) y recargue la página.';
+      }
+      if (e.status === 400) {
+        return 'Email o contraseña incorrectos.';
+      }
     }
-    if (err?.status === 401 || err?.status === 403) {
-      return 'Credenciales incorrectas o no tiene acceso a este portal (use el rol correcto).';
-    }
+    const err = e as { name?: string; message?: string };
     if (err?.name === 'TimeoutError' || err?.message?.includes('Timeout')) {
-      return 'El servidor tardó demasiado (Render free). Espere 1 minuto, recargue la página e intente de nuevo.';
+      return 'El servidor tardó demasiado (Render free). Espere 1 minuto, recargue e intente de nuevo.';
     }
-    return 'Error al iniciar sesión. Pruebe admin@hospy.com / admin123 en Panel Admin.';
+    return 'No se pudo iniciar sesión. Verifique email y contraseña.';
+  }
+
+  private extractApiMessage(body: unknown): string | null {
+    if (body && typeof body === 'object' && 'error' in body) {
+      const msg = (body as { error: unknown }).error;
+      if (typeof msg === 'string' && msg.trim()) return msg;
+    }
+    return null;
   }
 }
